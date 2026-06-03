@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from flask import Flask, jsonify, request
+from flask import Flask, g, jsonify
 
 from auth.jwt_validator import require_auth
 
@@ -19,7 +19,7 @@ def public_route():
 def protected_route():
     return jsonify({
         "message": "This is a protected message!",
-        "sub": request.current_payload.get("sub"),
+        "sub": g.current_user.get("sub"),
     })
 
 
