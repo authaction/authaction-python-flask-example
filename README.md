@@ -1,10 +1,10 @@
 # authaction-python-flask-example
 
-A Python Flask application demonstrating API authorization using [AuthAction](https://app.authaction.com/) with JWKS-based JWT validation.
+A Python Flask application demonstrating API authorization using [AuthAction](https://app.authaction.com/) with the `authaction-python-sdk`.
 
 ## Overview
 
-This application shows how to configure and handle authorization using AuthAction's access tokens in a Flask API. It validates JSON Web Tokens (JWT) signed with RS256 by fetching public keys dynamically from AuthAction's JWKS endpoint.
+This application shows how to configure and handle authorization using AuthAction's access tokens in a Flask API. It validates JSON Web Tokens (JWT) by using the `authaction` SDK, which handles JWKS fetching and RS256 validation automatically.
 
 ## Prerequisites
 
@@ -98,7 +98,7 @@ This application shows how to configure and handle authorization using AuthActio
 authaction-python-flask-example/
 ├── auth/
 │   ├── __init__.py
-│   └── jwt_validator.py    # JWKS fetching, caching, JWT validation, require_auth decorator
+│   └── jwt_validator.py    # AuthAction SDK setup and require_auth decorator
 ├── app.py                  # Flask app and route definitions
 ├── .env.example
 ├── requirements.txt
@@ -107,29 +107,15 @@ authaction-python-flask-example/
 
 ## Code Explanation
 
-### `auth/jwt_validator.py` — JWT Validation
+### `auth/jwt_validator.py` — Auth Decorator Setup
 
-- **`_get_jwks()`** — Fetches and in-memory caches the public keys from
-  `https://{AUTHACTION_DOMAIN}/.well-known/jwks.json`. On a cache miss caused
-  by key rotation, it busts the cache and retries once.
-
-- **`_find_rsa_key(token)`** — Extracts the `kid` from the unverified token
-  header and finds the matching RSA key in the JWKS response.
-
-- **`verify_token(token)`** — Decodes and validates the JWT using:
-  - Algorithm: `RS256`
-  - Issuer: `https://{AUTHACTION_DOMAIN}`
-  - Audience: `{AUTHACTION_AUDIENCE}`
-
-- **`require_auth`** — A route decorator that extracts the `Bearer` token from
-  the `Authorization` header, calls `verify_token`, and stores the decoded
-  payload on `request.current_payload`. Returns 401 on any validation failure.
+Creates an `AuthAction` client from `authaction` with `AUTHACTION_DOMAIN` and `AUTHACTION_AUDIENCE`, then calls `make_require_auth(aa)` from `authaction.flask` to produce a `require_auth` route decorator. The SDK handles JWKS fetching, caching, and RS256 JWT validation internally.
 
 ### `app.py` — Routes
 
 - **`GET /public`** — No decorator, accessible without authentication.
 - **`GET /protected`** — `@require_auth` guards the route. The verified payload
-  is available via `request.current_payload`.
+  is available via `g.current_user`.
 
 ## Common Issues
 
